@@ -1,0 +1,1838 @@
+alias ^details {
+    expansion "show system details";
+}
+alias ^pkg {
+    expansion "show system package-info";
+}
+alias ^top {
+    expansion "show processes cpu";
+}
+alias ^uptime {
+    expansion "show system uptime";
+}
+confdConfig {
+    notifications {
+        eventStreams {
+            stream oam {
+                description   "Versa notifications";
+                replaySupport false;
+            }
+        }
+    }
+    hideGroup debug {
+        password $1$F8/rcfNO$b5AULD3NDiutp/.8bMifu.;
+    }
+    hideGroup full;
+    hideGroup hidemib-group;
+    logs {
+        syslogConfig {
+            facility daemon;
+            udp {
+                disabled;
+                host    syslogsrv.example.com;
+                port    514;
+            }
+        }
+        confdLog {
+            enabled;
+            file {
+                enabled;
+                name    /var/log/versa/confd/confd.log;
+            }
+        }
+        developerLog {
+            enabled;
+            file {
+                enabled;
+                name    /var/log/versa/confd/devel.log;
+            }
+        }
+        auditLog {
+            enabled;
+            file {
+                enabled;
+                name    /var/log/versa/confd/audit.log;
+            }
+        }
+        netconfLog {
+            enabled;
+            file {
+                enabled;
+                name    /var/log/versa/confd/netconf.log;
+            }
+        }
+        snmpLog {
+            enabled;
+            file {
+                enabled;
+                name    /var/log/versa/confd/snmp.log;
+            }
+        }
+        webuiAccessLog {
+            enabled;
+            dir     /var/log/versa/confd;
+        }
+        netconfTraceLog {
+            disabled;
+            filename /var/log/versa/confd/netconf.trace.log;
+        }
+        errorLog {
+            enabled;
+            filename /var/log/versa/confd/confderr.log;
+            maxSize  S10M;
+        }
+    }
+    ssh {
+        algorithms {
+            kex        diffie-hellman-group-exchange-sha256;
+            mac        hmac-sha2-256,hmac-sha2-512;
+            encryption aes128-ctr,aes192-ctr,aes256-ctr;
+        }
+        clientAliveInterval 30s;
+        clientAliveCountMax 3;
+    }
+    cli {
+        bannerFile              /opt/versa/etc/cbanner;
+        prompt1                 "\u@\h-cli\M> ";
+        prompt2                 "\u@\h-cli\M% ";
+        cStylePromptInJStyle    true;
+        autoWizard {
+            disabled;
+        }
+        ssh {
+            disabled;
+        }
+        historyRemoveDuplicates true;
+        quoteStyle              quote;
+    }
+    webui {
+        disabled;
+        docroot /opt/versa/confd/src/confd/webui_ng/docroot;
+        transport {
+            tcp {
+                disabled;
+            }
+            ssl {
+                enabled;
+                ip           0.0.0.0;
+                port         8443;
+                extraIpPorts [ :::8443 ];
+                keyFile      /opt/versa/var/cert/vshost.key;
+                certFile     /opt/versa/var/cert/vshost.crt;
+                caCertFile   /opt/versa/var/cert/ca.crt;
+                verify       2;
+                ciphers      DHE-RSA-AES128-SHA:DHE-RSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES256-SHA256;
+                protocols    tlsv1.2;
+            }
+        }
+        cgi {
+            disabled;
+        }
+    }
+    rest {
+        enabled;
+    }
+    netconf {
+        enabled;
+        transport {
+            ssh {
+                enabled;
+                ip           0.0.0.0;
+                port         2022;
+                extraIpPorts [ :::2022 ];
+            }
+        }
+        idleTimeout  180s;
+        writeTimeout 180s;
+    }
+}
+snmp {
+    agent {
+        disabled;
+        ip               127.0.0.1;
+        udp-port         161;
+        extra-listen ::1 161;
+        version {
+            v1;
+            v2c;
+        }
+        max-message-size 50000;
+    }
+    system {
+        name     LACP-TEST;
+        location "10412 Frisco Street, Frisco, TX, United States 75035";
+    }
+    notify std_v1_trap {
+        tag  std_v1_trap;
+        type trap;
+    }
+    notify std_v2_inform {
+        tag  std_v2_inform;
+        type inform;
+    }
+    notify std_v2_trap {
+        tag  std_v2_trap;
+        type trap;
+    }
+    notify std_v3_inform {
+        tag  std_v3_inform;
+        type inform;
+    }
+    notify std_v3_trap {
+        tag  std_v3_trap;
+        type trap;
+    }
+    vacm {
+        view internet {
+            subtree 1.2 {
+                included;
+            }
+            subtree 1.3 {
+                included;
+            }
+            subtree 1.3.6.1 {
+                included;
+            }
+        }
+    }
+}
+interfaces {
+    ae1 {
+        enable       true;
+        promiscuous  false;
+        dhcp-trusted false;
+        unit 100 {
+            enable true;
+            family {
+                bridge {
+                    vlan-id-list   [ 100 ];
+                    interface-mode trunk;
+                }
+            }
+        }
+        aggregated-ethernet-options {
+            lacp {
+                lacp-mode       active;
+                system-priority 127;
+                periodic        slow;
+                max-links       16;
+            }
+        }
+    }
+    vni-0/0 {
+        enable       true;
+        promiscuous  false;
+        dhcp-trusted false;
+        ether-options {
+            aggregate ae1;
+            link-speed auto;
+            link-mode  auto;
+        }
+    }
+    vni-0/1 {
+        enable       true;
+        promiscuous  false;
+        dhcp-trusted false;
+        ether-options {
+            aggregate ae1;
+            link-speed auto;
+            link-mode  auto;
+        }
+    }
+    vni-0/3 {
+        enable true;
+        unit 0 {
+            description "WAN interface: INET-2";
+            vlan-id     0;
+            enable      true;
+            family {
+                inet {
+                    dhcp;
+                }
+            }
+        }
+    }
+    vni-0/4 {
+        enable       true;
+        promiscuous  false;
+        dhcp-trusted false;
+        unit 0 {
+            description "LAN interface: LAN";
+            enable      true;
+            family {
+                inet {
+                    address 10.10.10.1/24;
+                }
+            }
+        }
+    }
+    vni-0/5 {
+        promiscuous    true;
+        native-vlan-id 100;
+        unit 1 {
+            enable true;
+            family {
+                bridge {
+                    vlan-id-list   [ 100 ];
+                    interface-mode trunk;
+                }
+            }
+        }
+    }
+    vni-0/6 {
+        unit 0 {
+            family {
+                inet {
+                    address 192.168.1.1/24;
+                }
+            }
+        }
+    }
+    irb1 {
+        enable true;
+        unit 100 {
+            description "WAN interface: INET";
+            enable      true;
+            family {
+                inet {
+                    address 192.168.10.156/24;
+                }
+            }
+        }
+    }
+    tvi-0/100 {
+        enable true;
+        mtu    1400;
+        mode   ipsec;
+        type   ipsec;
+        unit 0 {
+            enable true;
+            family {
+                inet {
+                    address 10.0.0.2/24;
+                }
+            }
+        }
+    }
+    tvi-0/2 {
+        description "VXLAN Tunnel Interface for SAFE Control VR";
+        enable      true;
+        mode        ipsec;
+        type        p2mp-vxlan;
+        unit 0 {
+            enable true;
+            family {
+                inet {
+                    address 172.16.10.6/32;
+                }
+            }
+        }
+    }
+    tvi-0/3 {
+        description "ESP Tunnel Interface for SAFE Control VR";
+        enable      true;
+        mode        ipsec;
+        type        p2mp-esp;
+        unit 0 {
+            enable true;
+            family {
+                inet {
+                    address 172.16.10.7/32;
+                }
+            }
+        }
+    }
+    tvi-0/5 {
+        type p2mp-gre;
+        unit 0 {
+            family {
+                inet {
+                    address 5.5.5.1/32;
+                }
+            }
+        }
+    }
+    tvi-0/6 {
+        unit 0 {
+            family {
+                inet {
+                    address 6.6.6.6/32;
+                }
+            }
+        }
+    }
+    ptvi1025 {
+        remote-address   172.16.10.0;
+        parent-interface tvi-0/3.0;
+    }
+}
+networks {
+    INET {
+        interfaces [ irb1.100 ];
+    }
+    INET-2 {
+        interfaces [ vni-0/3.0 ];
+    }
+    LAN {
+        interfaces [ vni-0/4.0 vni-0/6.0 ];
+    }
+}
+dhcp-profiles {
+    dhcp-limits {
+        description "DHCP profile";
+        dhcp-options {
+            max-servers 100;
+            max-relays  100;
+            max-clients 8192;
+        }
+    }
+}
+orgs {
+    org SAFE {
+        appliance-owner;
+        services                      [ cgnat nextgen-firewall sdwan ];
+        available-routing-instances   [ INET-2-Transport-VR INET-Transport-VR SAFE-Control-VR SAFE-Enterprise SAFE-LAN-VR SAFE-default-switch TEST TEST-LAN-VR ];
+        owned-routing-instances       [ INET-2-Transport-VR INET-Transport-VR SAFE-Control-VR SAFE-Enterprise SAFE-LAN-VR SAFE-default-switch TEST TEST-LAN-VR ];
+        available-networks            [ INET INET-2 LAN ];
+        dhcp-profile                  dhcp-limits;
+        options {
+            session-limit 1000000;
+        }
+        traffic-identification {
+            using          [ ae1.100 ptvi1025 tvi-0/100.0 tvi-0/2.0 tvi-0/3.0 tvi-0/5.0 tvi-0/6.0 vni-0/5.1 ];
+            using-networks [ INET INET-2 LAN ];
+        }
+        sd-wan {
+            site {
+                global-tenant-id            1;
+                site-name                   LACP-TEST;
+                management-routing-instance SAFE-Control-VR;
+                wan-interfaces {
+                    irb1.100 {
+                        sla-monitoring-policy SLAM_Policy_irb1.100;
+                    }
+                    vni-0/3.0 {
+                        sla-monitoring-policy SLAM_Policy_vni-0/3.0;
+                    }
+                }
+                path-policy SLAM_Policy_irb1.100 {
+                    term To_Controller {
+                        match {
+                            remote-site-type [ controller ];
+                        }
+                        action {
+                            specific-config {
+                                fc_nc;
+                            }
+                        }
+                    }
+                    term To_Branches {
+                        match {
+                            remote-site-type [ branch ];
+                        }
+                        action {
+                            specific-config {
+                                fc_ef {
+                                    sla-monitoring {
+                                        interval 2000;
+                                        adaptive;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                path-policy SLAM_Policy_vni-0/3.0 {
+                    term To_Controller {
+                        match {
+                            remote-site-type [ controller ];
+                        }
+                        action {
+                            specific-config {
+                                fc_nc;
+                            }
+                        }
+                    }
+                    term To_Branches {
+                        match {
+                            remote-site-type [ branch ];
+                        }
+                        action {
+                            specific-config {
+                                fc_ef {
+                                    sla-monitoring {
+                                        interval 2000;
+                                        adaptive;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            controllers {
+                Controller-1 {
+                    management-addresses {
+                        IKE {
+                            ip-address       172.16.10.1;
+                            routing-instance SAFE-Control-VR;
+                        }
+                        secure {
+                            ip-address       172.16.10.0;
+                            routing-instance SAFE-Control-VR;
+                        }
+                    }
+                }
+            }
+        }
+        available-service-node-groups [ default-sng ];
+    }
+    org-services SAFE {
+        cgnat {
+            pools {
+                Pool-INET {
+                    egress-network [ INET ];
+                    source-port {
+                        allocation-scheme automatic;
+                        random-allocation;
+                    }
+                }
+                Pool-INET-2 {
+                    egress-network [ INET-2 ];
+                    source-port {
+                        allocation-scheme automatic;
+                        random-allocation;
+                    }
+                }
+            }
+            rules {
+                Speed-Test-INET {
+                    paired-site false;
+                    from {
+                        source-zone      [ versa-speedtest ];
+                        routing-instance INET-Transport-VR;
+                    }
+                    then {
+                        translated {
+                            translation-type napt-44;
+                            source-pool      Pool-INET;
+                            filtering-type   none;
+                            mapping-type     none;
+                        }
+                    }
+                }
+                Speed-Test-INET-2 {
+                    paired-site false;
+                    from {
+                        source-zone      [ versa-speedtest ];
+                        routing-instance INET-2-Transport-VR;
+                    }
+                    then {
+                        translated {
+                            translation-type napt-44;
+                            source-pool      Pool-INET-2;
+                            filtering-type   none;
+                            mapping-type     none;
+                        }
+                    }
+                }
+            }
+        }
+        class-of-service {
+            qos-policies {
+                Default-Policy;
+            }
+            app-qos-policies {
+                Default-Policy;
+            }
+        }
+        ipsec {
+            vpn-profile Cisco-CSR {
+                vpn-type                site-to-site;
+                precedence              0;
+                lef-profile-default     true;
+                alarms {
+                    ipsec-state-change enable;
+                    ike-state-change   enable;
+                    ike-auth-failure   enable;
+                }
+                local-auth-info {
+                    auth-type psk;
+                    id-type   ip;
+                    key       bZpCNxr+HMuewL75o270cOtBNQkVsHsV1YYROHeA+PCm2sdAGo659IKCwhCzDIMs2z+6D79di8lpkKWxgYQbLX4sXlZ/+1OXKeDXqsnvZIsUOSRv9gNyTtyBBlSh94mHj3MM1Z0BtNL24JoRBJIzXFYnJ6tG86kNyq6ebFM+xlfUBx17SYrG7U83IZ9i8NGTwjQANkHILdiY97MvsBkTMZlz6Xgj/FcM4ognvFxG/enT31oIlN5jd09jjezkFVB9Ah51DQOGg+BQ4PBFALaF16oSG5d37hDOS4lc5TXgpP0eZF9XU2MiWHNf15xfENM0SSvc+HasKR/9gV4Afx260g==;
+                    id-string 10.10.10.1;
+                }
+                local {
+                    interface-list [ vni-0/4.0 ];
+                }
+                routing-instance        TEST;
+                tunnel-routing-instance TEST;
+                tunnel-initiate         automatic;
+                ipsec {
+                    fragmentation pre-fragmentation;
+                    force-nat-t   disable;
+                    transform     esp-aes128-sha256;
+                    mode          tunnel;
+                    pfs-group     mod14;
+                    anti-replay   enable;
+                    life {
+                        duration 28800;
+                    }
+                    hello-interval {
+                        send-interval 10;
+                    }
+                }
+                ike {
+                    version               v2;
+                    frag-size             576;
+                    groups                [ mod1 mod14 ];
+                    encryption-algorithms [ 3des aes128 aes256 aes128-gcm aes256-gcm ];
+                    hash-algorithms       [ md5 sha1 sha256 sha384 sha512 ];
+                    lifetime              28800;
+                    dpd-timeout           30;
+                }
+                peer-auth-info {
+                    auth-type psk;
+                    id-type   ip;
+                    key       bZpCNxr+HMuewL75o270cOtBNQkVsHsV1YYROHeA+PCm2sdAGo659IKCwhCzDIMs2z+6D79di8lpkKWxgYQbLX4sXlZ/+1OXKeDXqsnvZIsUOSRv9gNyTtyBBlSh94mHj3MM1Z0BtNL24JoRBJIzXFYnJ6tG86kNyq6ebFM+xlfUBx17SYrG7U83IZ9i8NGTwjQANkHILdiY97MvsBkTMZlz6Xgj/FcM4ognvFxG/enT31oIlN5jd09jjezkFVB9Ah51DQOGg+BQ4PBFALaF16oSG5d37hDOS4lc5TXgpP0eZF9XU2MiWHNf15xfENM0SSvc+HasKR/9gV4Afx260g==;
+                    id-string 10.10.10.2;
+                }
+                peer {
+                    address [ 10.10.10.2 ];
+                }
+                tunnel-interface        tvi-0/100.0;
+                hardware-accelerator    any;
+            }
+            vpn-profile Controller-1-Profile {
+                vpn-type                branch-sdwan;
+                branch-sdwan-profile    b2b-sdwan;
+                local-auth-info {
+                    auth-type psk;
+                    id-type   email;
+                    key       Wl0Ff5AqZzaxZ3fDegaTWUeMSFLYzezM8iuYLIRmBXZ6gH9r1OdlGmtQPvy9oxf9ICvrMuHSoIgae2iEfdBzJ14phqaw8Idt7+Ibd6BvpSolB87n90rxVO8SI4m9y8u8SO3NURGjOuwCzpbaXf6mfr/Fd4rvi+jQYnAHRkNAiKo5r0DXDJxRbtAOmxKtkzarWJmuGH4AHeovkxWf1luA8MxlKcAI2zE887zurAf0cJiBV4WE510CVeT13KD3RDx1ScXHHJQB0Ify+Hxk1JNWEstJCZIR4mkVfCPp2vyZjxI6ciW4+uNa1wJ5G7qTXTpg5P6cOweZv69Oi7VGoR4wUA==;
+                    id-string LACP-TEST@SAFE.com;
+                }
+                local {
+                    interface-name tvi-0/2.0;
+                }
+                routing-instance        SAFE-Control-VR;
+                tunnel-routing-instance SAFE-Control-VR;
+                tunnel-initiate         automatic;
+                ipsec {
+                    transform esp-aes128-gcm;
+                    life {
+                        duration 28000;
+                    }
+                }
+                ike {
+                    group       mod19;
+                    transform   aes256-sha256;
+                    lifetime    28800;
+                    dpd-timeout 10;
+                }
+                peer-auth-info {
+                    auth-type psk;
+                    id-type   email;
+                    key       fBFBcuH9DLdH8l7KR7PUiwnZbX3+aqRlKlCKdMhaVEhAtXn3R+7kUPtre97kC2//BAkwdHmg/0r/d0UeAJ+KpcK1bxIa0N78mVeUU+YXbjBm+zKm/cpaVWwYqNOxFmBKzzyqbsYob3r6oukmKlrgJWfSMxAXOXulFRW0TAbupTmz8tsCM5Mw5i1Sz803jJgR5LoMaAHj18/GaQI5wFvo3W1Wxshzdy5F0u/0p4LpYegUbsDmJXdENYMhBTY1rcDfDgScxdRIN9lyS2BA3cAbFV5HxERbFLa06zkOUnlTW5+ZBYrUbwHrKFYs3f85G0hAj6UHaJ0umuU3CTrRnUuzig==;
+                    id-string Controller-1@SAFE.com;
+                }
+                peer {
+                    address [ 172.16.10.1 ];
+                }
+                tunnel-interface        ptvi1025;
+            }
+            branch-sdwan-profile b2b-sdwan {
+                life-time  28800;
+                rekey-time 6300;
+            }
+        }
+        lef {
+            collectors {
+                LEF-Collector-log_collector1 {
+                    destination-address 172.16.10.0;
+                    destination-port    1234;
+                    routing-instance    SAFE-Control-VR;
+                    transport           tcp;
+                    template            Default-LEF-Template;
+                }
+            }
+            collector-groups {
+                Default-Collector-Group {
+                    collectors                [ LEF-Collector-log_collector1 ];
+                    suspend-backup-collectors;
+                }
+            }
+            templates {
+                Default-LEF-Template {
+                    type ipfix;
+                }
+            }
+            profiles {
+                Default-Logging-Profile {
+                    collector-group Default-Collector-Group;
+                }
+            }
+            default-profile Default-Logging-Profile;
+        }
+        sd-wan {
+            forwarding-profiles {
+                Default-FP {
+                    evaluate-continuously enable;
+                    symmetric-forwarding  enable;
+                    reorder               enable;
+                }
+            }
+            policies {
+                Default-Policy;
+            }
+        }
+        security {
+            access-policies {
+                Default-Policy {
+                    rules {
+                        Allow_From_Trust {
+                            match {
+                                source {
+                                    zone {
+                                        zone-list [ Intf-LAN-Zone ];
+                                    }
+                                }
+                            }
+                            set {
+                                action allow;
+                            }
+                        }
+                        Allow_From_SDWAN {
+                            match {
+                                source {
+                                    zone {
+                                        zone-list [ ptvi ];
+                                    }
+                                }
+                            }
+                            set {
+                                action allow;
+                            }
+                        }
+                        Allow_All {
+                            set {
+                                action allow;
+                            }
+                        }
+                    }
+                }
+            }
+            logs {
+                profile Default-Logging-Profile;
+                logging-control {
+                    stats {
+                        all;
+                    }
+                }
+            }
+        }
+        objects {
+            zones {
+                Intf-INET-2-Zone {
+                    networks [ INET-2 ];
+                }
+                Intf-INET-Zone {
+                    networks [ INET ];
+                }
+                Intf-LAN-Zone {
+                    networks [ LAN ];
+                }
+                L-ST-SAFE-Enterprise-INET;
+                L-ST-SAFE-Enterprise-INET-2;
+                L-ST-SAFE-LAN-VR-INET;
+                L-ST-SAFE-LAN-VR-INET-2;
+                L2-Intf-SAFE-default-switch-Zone {
+                    interface-list [ ae1.100 vni-0/5.1 ];
+                }
+                RTI-INET-2-Zone {
+                    routing-instance INET-2-Transport-VR;
+                }
+                RTI-INET-Zone {
+                    routing-instance INET-Transport-VR;
+                }
+                W-ST-SAFE-Enterprise-INET;
+                W-ST-SAFE-Enterprise-INET-2;
+                W-ST-SAFE-LAN-VR-INET;
+                W-ST-SAFE-LAN-VR-INET-2;
+                host;
+                ptvi;
+                remote-client;
+                versa-fileexport;
+                versa-speedtest;
+                TES;
+                TEST2 {
+                    interface-list [ tvi-0/100.0 ];
+                }
+                TEST3 {
+                    interface-list [ tvi-0/5.0 ];
+                }
+            }
+        }
+        traffic-monitoring {
+            logging-control {
+                Default-Logging-Control {
+                    profile Default-Logging-Profile;
+                    options {
+                        stats {
+                            all;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+protocols {
+    lldp {
+        enable true;
+    }
+}
+routing-instances {
+    INET-2-Transport-VR {
+        instance-type virtual-router;
+        networks      [ INET-2 ];
+    }
+    INET-Transport-VR {
+        instance-type virtual-router;
+        networks      [ INET ];
+        routing-options {
+            static {
+                route {
+                    0.0.0.0/0 192.168.10.4 none {
+                        tag 0;
+                    }
+                }
+            }
+        }
+    }
+    SAFE-Control-VR {
+        instance-type virtual-router;
+        policy-options {
+            redistribution-policy Control-VR-Policy {
+                term Paired-TVI-Reject {
+                    match {
+                        address 169.254.0.0/16;
+                    }
+                    action {
+                        reject;
+                    }
+                }
+                term SDWAN-TVI1-Reject {
+                    match {
+                        address 172.16.10.6/32;
+                    }
+                    action {
+                        reject;
+                    }
+                }
+                term SDWAN-TVI2-Reject {
+                    match {
+                        address 172.16.10.7/32;
+                    }
+                    action {
+                        reject;
+                    }
+                }
+                term DIRECT {
+                    match {
+                        protocol direct;
+                    }
+                    action {
+                                  accept;
+                        set-origin igp;
+                    }
+                }
+            }
+            redistribute-to-bgp Control-VR-Policy;
+        }
+        mpls-vpn-core;
+        interfaces    [ ptvi1025 tvi-0/2.0 tvi-0/3.0 ];
+        routing-options {
+            mpls-vpn-local-router-interface {
+                family    inet;
+                interface tvi-0/3.0;
+            }
+        }
+        protocols {
+            bgp {
+                1 {
+                    local-address 172.16.10.7;
+                    graceful-restart {
+                        enable;
+                        maximum-restart-time 3600;
+                        recovery-time        3600;
+                        select-defer-time    30;
+                        stalepath-time       3600;
+                        multiplier           8;
+                    }
+                    router-id     172.16.10.7;
+                    local-as {
+                        as-number 64512;
+                    }
+                    routing-peer-policy Import-From-SDWAN-Policy {
+                        term Allow-All {
+                            action {
+                                                accept;
+                                community        8009:8009;
+                                community-action set-specific;
+                                next-term        Allow-Comm;
+                            }
+                        }
+                        term Allow-Comm {
+                            action {
+                                                accept;
+                                community        8015:0;
+                                community-action set-specific;
+                            }
+                        }
+                        term Allow-VersaPvt-All {
+                            match {
+                                family versa-private;
+                            }
+                            action {
+                                accept;
+                            }
+                        }
+                    }
+                    group Controllers-Group {
+                        type    internal;
+                        family {
+                            inet {
+                                unicast {
+                                    prefix-limit-control {
+                                        threshold 75;
+                                    }
+                                }
+                                versa-private {
+                                    prefix-limit-control {
+                                        threshold 75;
+                                    }
+                                }
+                            }
+                            inet-vpn {
+                                unicast {
+                                    prefix-limit-control {
+                                        threshold 75;
+                                    }
+                                }
+                            }
+                            inet6-vpn {
+                                unicast {
+                                    prefix-limit-control {
+                                        threshold 75;
+                                    }
+                                }
+                            }
+                        }
+                        peer-as 64512;
+                        neighbor 172.16.10.0;
+                        import  Import-From-SDWAN-Policy;
+                    }
+                }
+            }
+        }
+    }
+    SAFE-Enterprise;
+    SAFE-LAN-VR {
+        instance-type          vrf;
+        policy-options {
+            redistribution-policy Default-Policy-To-BGP {
+                term T1-Paired-TVI-Direct {
+                    match {
+                        protocol direct;
+                        address  169.254.0.0/16;
+                    }
+                    action {
+                        reject;
+                    }
+                }
+                term T2-DIRECT {
+                    match {
+                        protocol direct;
+                    }
+                    action {
+                                            accept;
+                        set-origin           igp;
+                        set-local-preference 110;
+                    }
+                }
+            }
+            redistribute-to-bgp Default-Policy-To-BGP;
+        }
+        global-vrf-id          2;
+        mpls-vpn-core-instance SAFE-Control-VR;
+        route-distinguisher    2L:102;
+        vrf-both-target        target:2L:2;
+    }
+    SAFE-default-switch {
+        instance-type virtual-switch;
+        bridge-domains {
+            vlan-100 {
+                vlan-id           100;
+                routing-interface irb1.100;
+            }
+        }
+        interfaces    [ ae1.100 ];
+    }
+    TEST {
+        networks      [ LAN ];
+        mpls-vpn-core;
+        interfaces    [ tvi-0/100.0 tvi-0/5.0 ];
+        routing-options {
+            create-dynamic-gre-tunnels;
+            mpls-vpn-local-router-address     5.5.5.1;
+            static {
+                route {
+                    5.5.5.5/32 10.0.0.1 none;
+                    192.168.2.0/24 10.0.0.1 tvi-0/100.0;
+                }
+            }
+        }
+        protocols {
+            bgp {
+                1 {
+                    router-id 5.5.5.1;
+                    local-as {
+                        as-number 65001;
+                    }
+                    group cisco-isr {
+                        type          internal;
+                        family {
+                            inet-vpn {
+                                unicast;
+                            }
+                        }
+                        local-address 5.5.5.1;
+                        neighbor 5.5.5.5 {
+                            peer-as 65001;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    TEST-LAN-VR {
+        instance-type          vrf;
+        policy-options {
+            redistribution-policy r1 {
+                term t1 {
+                    match {
+                        protocol direct;
+                    }
+                    action {
+                        accept;
+                    }
+                }
+            }
+            redistribute-to-bgp r1;
+        }
+        mpls-vpn-core-instance TEST;
+        interfaces             [ tvi-0/6.0 ];
+        route-distinguisher    1L:100;
+        vrf-both-target        target:100:1;
+    }
+}
+service-node-groups {
+    default-sng {
+        id       0;
+        type     internal;
+        services [ cgnat nextgen-firewall sdwan ];
+    }
+}
+system {
+    vnf-manager {
+        ip-addresses        [ 192.168.20.51/32 ];
+        vnf-mgmt-interfaces [ tvi-0/3.0 ];
+    }
+    dns {
+        versa-speedtest {
+            name-servers [ 8.8.8.8 8.8.4.4 ];
+        }
+    }
+    identification {
+        name      LACP-TEST;
+        location  "10412 Frisco Street, Frisco, TX, United States 75035";
+        latitude  33.165721;
+        longitude -96.833713;
+    }
+    session {
+        check-tcp-syn           false;
+        reevaluate-reverse-flow false;
+        tcp-send-reset          false;
+        tcp-secure-reset        false;
+        tcp-adjust-mss {
+            enable          true;
+            interface-types all;
+        }
+    }
+    services {
+        ssh  enabled;
+        sftp disabled;
+        www  disabled;
+    }
+    subjugate {
+        enabled;
+        allow-cli true;
+    }
+    time-zone America/Los_Angeles;
+    users admin {
+        login shell;
+        role  admin;
+    }
+    users versa {
+        login shell;
+        role  admin;
+    }
+    ssh {
+        client-alive-interval 300;
+    }
+    sd-wan {
+        site {
+            site-type    branch;
+            chassis-id   b3ce1ade-d4dc-11ef-afd4-525400c97d4e;
+            site-id      102;
+            provider-org SAFE;
+            wan-interfaces {
+                irb1.100 {
+                    transport-domains [ Internet ];
+                    inet {
+                        circuit-name INET;
+                    }
+                }
+                vni-0/3.0 {
+                    transport-domains [ Internet ];
+                    inet {
+                        circuit-name INET-2;
+                    }
+                }
+            }
+        }
+        transport-domains {
+            Internet {
+                id          20;
+                description "Public internet routing domain";
+            }
+        }
+        controllers {
+            Controller-1 {
+                site-name Controller-1;
+                site-id   2;
+                transport-addresses {
+                    Controller-1-Transport-INET {
+                        ip-address        192.168.30.57;
+                        transport-domains [ Internet ];
+                    }
+                }
+            }
+        }
+    }
+}
+nacm {
+    write-default    permit;
+    groups {
+        group SAFE-adc-admin-group;
+        group SAFE-cgnat-admin-group;
+        group SAFE-network-admin-group;
+        group SAFE-oper-group;
+        group SAFE-sdwan-admin-group;
+        group SAFE-security-admin-group;
+        group SAFE-tenant-admin-group;
+        group admin {
+            user-name [ admin versa ];
+        }
+        group oper {
+            user-name [ restuser ];
+        }
+    }
+    rule-list snmp-ro {
+        group [ * ];
+        rule deny-write {
+            access-operations create,update,delete;
+            action            deny;
+            context           snmp;
+        }
+    }
+    rule-list admin {
+        group [ admin ];
+        rule any-access {
+            action permit;
+        }
+        cmdrule all_cmds {
+            command           *;
+            access-operations *;
+            action            permit;
+        }
+    }
+    rule-list any-group {
+        group [ * ];
+        rule tailf-aaa-authentication {
+            module-name       tailf-aaa;
+            path              /aaa/authentication/users/user[name='$USER'];
+            access-operations read,update;
+            action            permit;
+        }
+        rule tailf-aaa-user {
+            module-name       tailf-aaa;
+            path              /user[name='$USER'];
+            access-operations create,read,update,delete;
+            action            permit;
+        }
+        rule tailf-webui-user {
+            module-name       tailf-webui;
+            path              /webui/data-stores/user-profile[username='$USER'];
+            access-operations create,read,update,delete;
+            action            permit;
+        }
+    }
+    rule-list oper {
+        group [ oper ];
+        rule denyhidegroup {
+            path              /confdConfig/hideGroup;
+            access-operations read;
+            action            deny;
+            context           *;
+        }
+        rule denyusershow {
+            path              /system/users;
+            access-operations read;
+            action            deny;
+            context           *;
+        }
+        rule allow {
+            access-operations read;
+            action            permit;
+        }
+        rule allowosspackstatus {
+            path              /security/osspack/install/status;
+            access-operations exec;
+            action            permit;
+            context           rest;
+        }
+        rule allowupgrade {
+            path              /system/package;
+            access-operations read,exec;
+            action            permit;
+            context           rest;
+        }
+        rule allowintsptest {
+            path              /diagnostics/internet-speedtest;
+            access-operations exec;
+            action            permit;
+            context           rest;
+        }
+        rule allowenabledisable {
+            path              /system/status;
+            access-operations exec;
+            action            permit;
+            context           rest;
+        }
+        rule allowospfclear {
+            path              /clear/ospf/_operations/ospf_neighbor;
+            access-operations exec;
+            action            permit;
+            context           rest;
+        }
+        rule allowpvtkey {
+            path              /orgs/org-services/crypto/pki/private-key/preview;
+            access-operations exec;
+            action            permit;
+            context           rest;
+        }
+        rule allowcachain {
+            path              /orgs/org-services/crypto/pki/ca-chain/preview;
+            access-operations exec;
+            action            permit;
+            context           rest;
+        }
+        rule allowcert {
+            path              /orgs/org-services/crypto/pki/certificate/preview;
+            access-operations exec;
+            action            permit;
+            context           rest;
+        }
+        rule allowuseridentification {
+            path              /orgs/org-services/user-identification/live-users/clear/select;
+            access-operations exec;
+            action            permit;
+            context           rest;
+        }
+        rule allowsslvpnfltrdisplay {
+            path              /orgs/org-services/ssl/filter-display;
+            access-operations exec;
+            action            permit;
+            context           rest;
+        }
+        rule allowsslvpnfltrdel {
+            path              /orgs/org-services/ssl/filter-delete;
+            access-operations exec;
+            action            permit;
+            context           rest;
+        }
+        rule allowsslvpnfltradd {
+            path              /orgs/org-services/ssl/filter-add;
+            access-operations exec;
+            action            permit;
+            context           rest;
+        }
+        rule allowipsecfltrdel {
+            path              /orgs/org-services/ipsec/filter-delete;
+            access-operations exec;
+            action            permit;
+            context           rest;
+        }
+        rule allowipsecfltradd {
+            path              /orgs/org-services/ipsec/filter-add;
+            access-operations exec;
+            action            permit;
+            context           rest;
+        }
+        rule allowipsecfilter {
+            path              /orgs/org-services/ipsec/vpn-profile/ipsec/*;
+            access-operations exec;
+            action            permit;
+            context           rest;
+        }
+        rule allowfltrdel {
+            path              /orgs/org/filter-delete;
+            access-operations exec;
+            action            permit;
+            context           rest;
+        }
+        rule allowfltradd {
+            path              /orgs/org/filter-add;
+            access-operations exec;
+            action            permit;
+            context           rest;
+        }
+        rule allowsvcrestart {
+            path              /system:system/restart;
+            access-operations exec;
+            action            permit;
+            context           rest;
+        }
+        rule allowvnfactions {
+            path              /guest-vnfs/virtual-machines/virtual-machine/*;
+            access-operations exec;
+            action            permit;
+            context           rest;
+        }
+        rule rest {
+            action deny;
+        }
+        cmdrule denyshell {
+            command shell;
+            action  deny;
+        }
+        cmdrule denyunh {
+            command unhide;
+            action  deny;
+        }
+        cmdrule denymon {
+            command monitor;
+            action  deny;
+        }
+        cmdrule denyfile {
+            command file;
+            action  deny;
+        }
+        cmdrule denyxpath {
+            command xpath;
+            action  deny;
+        }
+        cmdrule denyappend {
+            command append;
+            action  deny;
+        }
+        cmdrule denywget {
+            command wget;
+            action  deny;
+        }
+        cmdrule denysystem {
+            command "request system";
+            action  deny;
+        }
+        cmdrule denyclear {
+            command "request clear";
+            action  deny;
+        }
+        cmdrule denyrbk {
+            command rollback;
+            action  deny;
+        }
+        cmdrule allowrtdfilter {
+            command nomore;
+            action  permit;
+        }
+        cmdrule read_only {
+            command           *;
+            access-operations read,exec;
+            action            permit;
+        }
+    }
+    rule-list SAFE-adc-admin-rules {
+        group [ SAFE-adc-admin-group ];
+        rule r1 {
+            path              /orgs/org-services[name='SAFE']/adc;
+            access-operations *;
+            action            permit;
+        }
+        rule r2 {
+            path              /;
+            access-operations *;
+            action            deny;
+        }
+        cmdrule r3 {
+            command           request;
+            access-operations *;
+            action            deny;
+        }
+        cmdrule r4 {
+            command           shell;
+            access-operations *;
+            action            deny;
+        }
+        cmdrule r5 {
+            command           rollback;
+            access-operations *;
+            action            deny;
+        }
+        cmdrule r6 {
+            command           "show alarms";
+            access-operations *;
+            action            deny;
+        }
+        cmdrule r7 {
+            command           "show log";
+            access-operations *;
+            action            deny;
+        }
+        cmdrule r8-sa {
+            command           "show alarms";
+            access-operations *;
+            action            deny;
+        }
+        cmdrule r8-sl {
+            command           "show log";
+            access-operations *;
+            action            deny;
+        }
+        cmdrule r8 {
+            command *;
+            action  permit;
+        }
+    }
+    rule-list SAFE-cgnat-admin-rules {
+        group [ SAFE-cgnat-admin-group ];
+        rule r1 {
+            path              /orgs/org-services[name='SAFE']/cgnat;
+            access-operations *;
+            action            permit;
+        }
+        rule r2 {
+            path              /;
+            access-operations *;
+            action            deny;
+        }
+        cmdrule r3 {
+            command           request;
+            access-operations *;
+            action            deny;
+        }
+        cmdrule r4 {
+            command           shell;
+            access-operations *;
+            action            deny;
+        }
+        cmdrule r5 {
+            command           rollback;
+            access-operations *;
+            action            deny;
+        }
+        cmdrule r6 {
+            command           "show alarms";
+            access-operations *;
+            action            deny;
+        }
+        cmdrule r7 {
+            command           "show log";
+            access-operations *;
+            action            deny;
+        }
+        cmdrule r8-sa {
+            command           "show alarms";
+            access-operations *;
+            action            deny;
+        }
+        cmdrule r8-sl {
+            command           "show log";
+            access-operations *;
+            action            deny;
+        }
+        cmdrule r8 {
+            command *;
+            action  permit;
+        }
+    }
+    rule-list SAFE-network-admin-rules {
+        group [ SAFE-network-admin-group ];
+        rule r1 {
+            path              /interfaces;
+            access-operations *;
+            action            permit;
+        }
+        rule r2 {
+            path              /routing-instances;
+            access-operations *;
+            action            permit;
+        }
+        rule r3 {
+            path              /networks;
+            access-operations *;
+            action            permit;
+        }
+        cmdrule r4 {
+            command           request;
+            access-operations *;
+            action            deny;
+        }
+        cmdrule r5 {
+            command           shell;
+            access-operations *;
+            action            deny;
+        }
+        cmdrule r6 {
+            command           rollback;
+            access-operations *;
+            action            deny;
+        }
+        cmdrule r7 {
+            command           "show alarms";
+            access-operations *;
+            action            deny;
+        }
+        cmdrule r8 {
+            command           "show log";
+            access-operations *;
+            action            deny;
+        }
+        cmdrule r9-sa {
+            command           "show alarms";
+            access-operations *;
+            action            deny;
+        }
+        cmdrule r9-sl {
+            command           "show log";
+            access-operations *;
+            action            deny;
+        }
+        cmdrule r9 {
+            command *;
+            action  permit;
+        }
+    }
+    rule-list SAFE-oper-rules {
+        group [ SAFE-oper-group ];
+        rule r1 {
+            path              /orgs/org-services[name='SAFE'];
+            access-operations read;
+            action            permit;
+        }
+        rule r2 {
+            path              /;
+            access-operations *;
+            action            deny;
+        }
+        cmdrule r3 {
+            command           "request clear";
+            access-operations *;
+            action            deny;
+        }
+        cmdrule r4 {
+            command           "request system";
+            access-operations *;
+            action            deny;
+        }
+        cmdrule r5 {
+            command           shell;
+            access-operations *;
+            action            deny;
+        }
+        cmdrule r6 {
+            command           rollback;
+            access-operations *;
+            action            deny;
+        }
+        cmdrule r7 {
+            command *;
+            action  permit;
+        }
+    }
+    rule-list SAFE-sdwan-admin-rules {
+        group [ SAFE-sdwan-admin-group ];
+        rule r1 {
+            path              /system/sd-wan;
+            access-operations *;
+            action            permit;
+        }
+        rule r2 {
+            path              /routing-instances;
+            access-operations *;
+            action            permit;
+        }
+        rule r3 {
+            path              /orgs/org[name='SAFE']/sd-wan;
+            access-operations *;
+            action            permit;
+        }
+        rule r4 {
+            path              /orgs/org-services[name='SAFE']/lef;
+            access-operations *;
+            action            permit;
+        }
+        rule r5 {
+            path              /orgs/org-services[name='SAFE']/ipsec;
+            access-operations *;
+            action            permit;
+        }
+        rule r6 {
+            path              /orgs/org-services[name='SAFE']/cgnat;
+            access-operations *;
+            action            permit;
+        }
+        rule r7 {
+            path              /orgs/org-services[name='SAFE']/sd-wan;
+            access-operations *;
+            action            permit;
+        }
+        rule r8 {
+            path              /;
+            access-operations *;
+            action            deny;
+        }
+        cmdrule r9 {
+            command           request;
+            access-operations *;
+            action            deny;
+        }
+        cmdrule r10 {
+            command           shell;
+            access-operations *;
+            action            deny;
+        }
+        cmdrule r11 {
+            command           rollback;
+            access-operations *;
+            action            deny;
+        }
+        cmdrule r12 {
+            command           "show alarms";
+            access-operations *;
+            action            deny;
+        }
+        cmdrule r13 {
+            command           "show log";
+            access-operations *;
+            action            deny;
+        }
+        cmdrule r14-sa {
+            command           "show alarms";
+            access-operations *;
+            action            deny;
+        }
+        cmdrule r14-sl {
+            command           "show log";
+            access-operations *;
+            action            deny;
+        }
+        cmdrule r14 {
+            command *;
+            action  permit;
+        }
+    }
+    rule-list SAFE-security-admin-rules {
+        group [ SAFE-security-admin-group ];
+        rule r1 {
+            path              /predefineded-actions;
+            access-operations read;
+            action            permit;
+        }
+        rule r2 {
+            path              /predefineded-appid;
+            access-operations read;
+            action            permit;
+        }
+        rule r3 {
+            path              /predefined-file-extract-apps;
+            access-operations read;
+            action            permit;
+        }
+        rule r4 {
+            path              /predefined-file-extract-apps;
+            access-operations read;
+            action            permit;
+        }
+        rule r5 {
+            path              /predefined-file-types;
+            access-operations read;
+            action            permit;
+        }
+        rule r6 {
+            path              /predefined-filefilter;
+            access-operations read;
+            action            permit;
+        }
+        rule r7 {
+            path              /predefined-geoip;
+            access-operations read;
+            action            permit;
+        }
+        rule r8 {
+            path              /predefined-iprep;
+            access-operations read;
+            action            permit;
+        }
+        rule r9 {
+            path              /predefined-ips-scanner-parameters;
+            access-operations read;
+            action            permit;
+        }
+        rule r10 {
+            path              /predefined-ips-scanners;
+            access-operations read;
+            action            permit;
+        }
+        rule r11 {
+            path              /predefined-ips;
+            access-operations read;
+            action            permit;
+        }
+        rule r12 {
+            path              /predefined-services;
+            access-operations read;
+            action            permit;
+        }
+        rule r13 {
+            path              /predefined-url-categories;
+            access-operations read;
+            action            permit;
+        }
+        rule r14 {
+            path              /predefined-url-reputations;
+            access-operations read;
+            action            permit;
+        }
+        rule r15 {
+            path              /networks;
+            access-operations read;
+            action            permit;
+        }
+        rule r16 {
+            path              /orgs/org-services[name='SAFE']/lef;
+            access-operations read;
+            action            permit;
+        }
+        rule r17 {
+            path              /orgs/org-services[name='SAFE']/security;
+            access-operations *;
+            action            permit;
+        }
+        rule r18 {
+            path              /orgs/org-services[name='SAFE']/objects;
+            access-operations *;
+            action            permit;
+        }
+        rule r19 {
+            path              /;
+            access-operations *;
+            action            deny;
+        }
+        cmdrule r20 {
+            command           request;
+            access-operations *;
+            action            deny;
+        }
+        cmdrule r21 {
+            command           shell;
+            access-operations *;
+            action            deny;
+        }
+        cmdrule r22 {
+            command           "show alarms";
+            access-operations *;
+            action            deny;
+        }
+        cmdrule r23 {
+            command           "show log";
+            access-operations *;
+            action            deny;
+        }
+        cmdrule r24-sa {
+            command           "show alarms";
+            access-operations *;
+            action            deny;
+        }
+        cmdrule r24-sl {
+            command           "show log";
+            access-operations *;
+            action            deny;
+        }
+        cmdrule r24 {
+            command *;
+            action  permit;
+        }
+    }
+    rule-list SAFE-tenant-admin-rules {
+        group [ SAFE-tenant-admin-group ];
+        rule r1 {
+            path              /orgs/org-services[name='SAFE'];
+            access-operations *;
+            action            permit;
+        }
+        rule r2 {
+            path              /;
+            access-operations *;
+            action            deny;
+        }
+        cmdrule r3 {
+            command           shell;
+            access-operations *;
+            action            deny;
+        }
+        cmdrule r4 {
+            command           rollback;
+            access-operations *;
+            action            deny;
+        }
+        cmdrule r5 {
+            command           "show alarms";
+            access-operations *;
+            action            deny;
+        }
+        cmdrule r6 {
+            command           "show log";
+            access-operations *;
+            action            deny;
+        }
+        cmdrule r7-sa {
+            command           "show alarms";
+            access-operations *;
+            action            deny;
+        }
+        cmdrule r7-sl {
+            command           "show log";
+            access-operations *;
+            action            deny;
+        }
+        cmdrule r7 {
+            command *;
+            action  permit;
+        }
+    }
+    cmd-read-default deny;
+    cmd-exec-default deny;
+}
